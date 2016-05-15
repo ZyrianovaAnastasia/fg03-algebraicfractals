@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Cache-Control" content="no-cache"/>
+	<title>AlgebrFract</title>
+	<script>
+
+function Point(){
+	this.x=x;
+	this.y=y;
+}
+
+function newtonPools(left, top, right, bottom){
+	var n = document.getElementById("number").value;
+     var canvas = document.getElementById("canvas");
+     var canvasWidth = parseInt(canvas.getAttribute("width"));
+     var canvasHeight = parseInt(canvas.getAttribute("height"));
+     var type = document.getElementById("color").value;
+     var context = canvas.getContext('2d');
+     var imageData = context.createImageData(canvasWidth, canvasHeight);
+     var cos=Math.cos(Math.PI/3);
+     var sin=Math.sin(Math.PI/3);
+     for(i=0; i<canvasWidth; ++i){
+     	for(j=0; j<canvasHeight; ++j)
+     	{
+     		var p=GetComplexPoint(i,j, left, top, right, bottom, canvasWidth, canvasHeight);
+     		var attractor=FindAttractor(p[0], p[1], 0, n, cos, sin );
+     		var colorType;
+     		switch(type){
+     			case "classic": colorType=classic(attractor[0]);
+     			break;
+     			case "levels": colorType=levels(attractor[1]);
+     			break;
+     			case "zebra": colorType=zebra(attractor[1]);
+     			break;
+     		}
+             imageData.data[4*(i + canvasWidth*j)]=colorType[0];
+             imageData.data[4*(i + canvasWidth*j)+1]=colorType[1];
+             imageData.data[4*(i + canvasWidth*j)+2]=colorType[2];
+             imageData.data[4*(i + canvasWidth*j)+3]=colorType[3];
+     	}
+     }
+      context.putImageData(imageData, 0, 0);
+}
+
+function GetComplexPoint(i, j, left, top, right, bottom, width, height){
+	var x=i*(right - left)/(width - 1) + left;
+	var y=j*(bottom - top)/(height - 1) + top;
+	var p=[x, y];
+	return p;
+}
+
+function MinNumber(x1, y1, x2, y2) {
+     var e = 0.0001;
+     return Math.abs(x1 - x2) <= e && Math.abs(y1 - y2) <= e;
+ }
+
+function FindAttractor(x, y, i, n, cos, sin){
+     if (n == 0) 
+     	return [0, 0];
+     if (MinNumber(x, y, 1, 0)) 
+     	return [0, i];
+     if (MinNumber(x, y, -cos, sin))
+     	return [1, i];
+     if (MinNumber(x, y, -cos, -sin))
+     	return [2, i];
+     var X = 2 * x / 3 + (x*x - y*y) / (3 * Math.pow((x*x + y*y), 2));
+     var Y = 2 * y * (1 - x / Math.pow((x*x + y*y), 2)) / 3;
+     return FindAttractor(X, Y, i + 1, n - 1, cos, sin);
+}
+
+function classic(attractor){
+	var color=[0,0,0,255];
+	if(attractor == 0)
+		color=[255, 0, 0, 255];
+	if(attractor == 1)
+		color=[0, 255, 0, 255];
+	if(attractor == 2)
+		color=[0, 0, 255, 255];
+	return color;
+}
+
+function levels(n){
+	var alpha = n > 1 ? 255 /(n-1) : 255;
+	return [220,88,200,alpha];
+}
+
+function zebra(n){
+	if(n%2 == 0)
+		return [0,255,0, 255];
+	return [0,0,150,255];
+}
+
+function run(){
+    canvas.onmouseup = mouseUp;
+    newtonPools(-2, 2, 2 ,-2);
+}
+
+
+var l=-2;
+var t=2;
+var r=2;
+var b=-2;
+function mouseUp(e){
+    var x=e.pageX - 8;
+    var y=e.pageY - 8;
+    var canvasWidth = parseInt(canvas.getAttribute("width"));
+    var canvasHeight = parseInt(canvas.getAttribute("height"));
+    var left = x - canvasWidth/3;
+    var top = y - canvasHeight/3;
+    var right = x + canvasWidth/3;
+    var bottom = y + canvasHeight/3;
+
+    var pTop=GetComplexPoint(left, top, l, t, r, b, canvasWidth, canvasHeight);
+    var pBottom=GetComplexPoint(right, bottom, l, t, r, b, canvasWidth, canvasHeight);
+    newtonPools(pTop[0], pTop[1], pBottom[0], pBottom[1]);
+    l=pTop[0];
+    t=pTop[1];
+    r=pBottom[0];
+    b=pBottom[1];
+}
+
+
+</script>
+<body bgcolor="#BADDFC">
+<td>
+    <canvas height="600" width="600" id="canvas"></canvas>
+</td>
+<br>
+    раскраска: <select name="menu" size="1" id="color">
+    <option value="classic">классическая</option>
+    <option value="levels">уровни</option>
+    <option value="zebra">зебра</option>
+    </select></br>
+    </br>
+    количество итераций: <input type="number" id="number"> </br>
+    <input type="button" onclick="run()" value="draw"></br>
+    </br>
+    </br>
+</table>
+</body>
+</html>
